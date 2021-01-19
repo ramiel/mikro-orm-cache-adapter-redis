@@ -11,7 +11,7 @@ export class RedisCacheAdapter implements CacheAdapter {
 
   constructor(options: RedisCacheAdapterOptions) {
     const {debug = false, ...redisOpt} = options;
-    this.client = new IORedis(options);
+    this.client = new IORedis(redisOpt);
     this.debug = debug;
   }
 
