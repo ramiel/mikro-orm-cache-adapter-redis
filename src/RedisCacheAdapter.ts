@@ -2,17 +2,23 @@ import { CacheAdapter } from '@mikro-orm/core';
 import IORedis, {Redis, RedisOptions} from 'ioredis';
 
 export interface RedisCacheAdapterOptions extends RedisOptions {
+  expiration?: number
   debug?:boolean;
 }
 
 export class RedisCacheAdapter implements CacheAdapter {
   private readonly client: Redis;
   private readonly debug: boolean;
+  private readonly expiration?: number;
 
   constructor(options: RedisCacheAdapterOptions) {
-    const {debug = false, ...redisOpt} = options;
+    const {debug = false, expiration, ...redisOpt} = options;
     this.client = new IORedis(redisOpt);
     this.debug = debug;
+    this.expiration = expiration;
+    if(this.debug) {
+      console.log(`redis client created`, redisOpt);
+    }
   }
 
   async get(key: string) {
@@ -28,15 +34,16 @@ export class RedisCacheAdapter implements CacheAdapter {
     name: string,
     data: any,
     origin: string,
-    expiration?: number,
+    expiration = this.expiration,
   ): Promise<void> {
+    const stringData = JSON.stringify(data);
     if(this.debug) {
-      console.log(`set "${name}": "${data}" with expiration ${expiration}`);
+      console.log(`set "${name}": "${stringData}" with expiration ${expiration}`);
     }
     if(expiration) {
-      await this.client.set(name, JSON.stringify(data),'PX', expiration)
+      await this.client.set(name, stringData,'PX', expiration)
     } else {
-      await this.client.set(name, JSON.stringify(data))
+      await this.client.set(name, stringData)
     }
   }
 
