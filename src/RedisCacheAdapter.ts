@@ -5,7 +5,7 @@ interface RedisCacheAdapterOptions extends RedisOptions {
   debug?:boolean;
 }
 
-export default class RedisCacheAdapter implements CacheAdapter {
+export class RedisCacheAdapter implements CacheAdapter {
   private readonly client: Redis;
   private readonly debug: boolean;
 
