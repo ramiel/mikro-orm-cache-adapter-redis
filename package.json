@@ -1,0 +1,25 @@
+{
+  "name": "mikro-orm-cache-adapter-redis",
+  "version": "0.1.0",
+  "description": "A redis cache adapter for mikro-orm",
+  "main": "dist/index.js",
+  "typings": "dist/index.d.ts",
+  "repository": "https://github.com/ramiel/mikro-orm-cache-adapter-redis",
+  "author": "Fabrizio Ruggeri",
+  "license": "MIT",
+  "scripts": {
+    "prepare": "npm run build",
+    "build": "tsc"
+  },
+  "dependencies": {
+    "ioredis": "^4.19.4"
+  },
+  "devDependencies": {
+    "@mikro-orm/core": "^4.3.4",
+    "@types/ioredis": "^4.19.1",
+    "typescript": "^4.1.3"
+  },
+  "files": [
+    "dist"
+  ]
+}
