@@ -1,7 +1,7 @@
 import { CacheAdapter } from '@mikro-orm/core';
 import IORedis, {Redis, RedisOptions} from 'ioredis';
 
-interface RedisCacheAdapterOptions extends RedisOptions {
+export interface RedisCacheAdapterOptions extends RedisOptions {
   debug?:boolean;
 }
 
