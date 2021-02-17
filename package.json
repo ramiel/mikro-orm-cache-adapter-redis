@@ -1,6 +1,6 @@
 {
   "name": "mikro-orm-cache-adapter-redis",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A redis cache adapter for mikro-orm",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -16,7 +16,7 @@
     "@types/ioredis": "^4.19.1"
   },
   "devDependencies": {
-    "@mikro-orm/core": "^4.3.4",
+    "@mikro-orm/core": "^4.4.3",
     "ioredis": "^4.22.0",
     "typescript": "^4.1.3"
   },
