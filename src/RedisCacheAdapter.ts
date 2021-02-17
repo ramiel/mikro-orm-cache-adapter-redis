@@ -1,10 +1,18 @@
 import { CacheAdapter } from '@mikro-orm/core';
-import IORedis, {Redis, RedisOptions} from 'ioredis';
+import IORedis from 'ioredis';
+import type {Redis, RedisOptions} from 'ioredis';
 
-export interface RedisCacheAdapterOptions extends RedisOptions {
+export interface BaseOptions {
   expiration?: number
-  debug?:boolean;
+  debug?: boolean;
 }
+
+export interface BuildOptions extends BaseOptions, RedisOptions {}
+export interface ClientOptions extends BaseOptions {
+  client: Redis
+}
+
+export type RedisCacheAdapterOptions = BuildOptions | ClientOptions;
 
 export class RedisCacheAdapter implements CacheAdapter {
   private readonly client: Redis;
@@ -12,12 +20,18 @@ export class RedisCacheAdapter implements CacheAdapter {
   private readonly expiration?: number;
 
   constructor(options: RedisCacheAdapterOptions) {
-    const {debug = false, expiration, ...redisOpt} = options;
-    this.client = new IORedis(redisOpt);
+    const {debug = false, expiration} = options;
+    if((options as ClientOptions).client) {
+      this.client = (options as ClientOptions).client
+    } else {
+      const {keyPrefix = 'mikro:', ...redisOpt} = options as BuildOptions;
+      this.client = new IORedis(redisOpt);
+
+    }
     this.debug = debug;
     this.expiration = expiration;
     if(this.debug) {
-      console.log(`redis client created`, redisOpt);
+      console.log(`redis client created`);
     }
   }
 
