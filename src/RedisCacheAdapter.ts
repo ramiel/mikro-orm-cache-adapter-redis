@@ -18,16 +18,24 @@ export class RedisCacheAdapter implements CacheAdapter {
   private readonly client: Redis;
   private readonly debug: boolean;
   private readonly expiration?: number;
+  private connected = false;
 
   constructor(options: RedisCacheAdapterOptions) {
     const {debug = false, expiration} = options;
     if((options as ClientOptions).client) {
-      this.client = (options as ClientOptions).client
+      this.client = (options as ClientOptions).client;
     } else {
       const {keyPrefix = 'mikro:', ...redisOpt} = options as BuildOptions;
       this.client = new IORedis(redisOpt);
 
     }
+    this.client.on('ready', () => {
+      this.connected = true;
+    });
+    this.client.on('close', () => {
+      this.connected = false;
+    });
+    this.connected = this.client.status === 'ready';
     this.debug = debug;
     this.expiration = expiration;
     if(this.debug) {
@@ -35,12 +43,14 @@ export class RedisCacheAdapter implements CacheAdapter {
     }
   }
 
-  async get(key: string) {
+  async get<T = any>(key: string): Promise<T | undefined> {
+    console.log('set', this.connected)
+    if(!this.connected) return undefined;
     const data = await this.client.get(key);
     if(this.debug) {
       console.log(`get "${key}": "${data}"`);
     }
-    if(!data) return null;
+    if(!data) return undefined;
     return JSON.parse(data)
   }
 
@@ -50,6 +60,7 @@ export class RedisCacheAdapter implements CacheAdapter {
     origin: string,
     expiration = this.expiration,
   ): Promise<void> {
+    if(!this.connected) return;
     const stringData = JSON.stringify(data);
     if(this.debug) {
       console.log(`set "${name}": "${stringData}" with expiration ${expiration}`);
