@@ -44,7 +44,6 @@ export class RedisCacheAdapter implements CacheAdapter {
   }
 
   async get<T = any>(key: string): Promise<T | undefined> {
-    console.log('set', this.connected)
     if(!this.connected) return undefined;
     const data = await this.client.get(key);
     if(this.debug) {
