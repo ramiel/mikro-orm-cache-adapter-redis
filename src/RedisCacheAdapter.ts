@@ -1,4 +1,4 @@
-import { CacheAdapter } from '@mikro-orm/core';
+import type { CacheAdapter } from '@mikro-orm/core';
 import IORedis from 'ioredis';
 import type {Redis, RedisOptions} from 'ioredis';
 
@@ -27,7 +27,6 @@ export class RedisCacheAdapter implements CacheAdapter {
     } else {
       const {keyPrefix = 'mikro:', ...redisOpt} = options as BuildOptions;
       this.client = new IORedis(redisOpt);
-
     }
     this.client.on('ready', () => {
       this.connected = true;
