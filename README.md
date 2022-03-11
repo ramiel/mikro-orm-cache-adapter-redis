@@ -19,9 +19,14 @@ const orm = await MikroORM.init({
   resultCache: {
     adapter: RedisCacheAdapter,
     options: {
+      // Base options
       // An optional key prefix. By default is `mikro`
       keyPrefix: 'mikro'
-      // Here goes IORedis connection options
+      // Optional: print debug informations
+      debug: false,
+
+
+      // Here goes IORedis connection options (the library will instantiate the client)
       host: '...',
       port: 6379,
       password: 'yourpassword'
