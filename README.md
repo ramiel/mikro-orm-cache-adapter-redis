@@ -1,6 +1,6 @@
 # Mikro-orm - Redis cache adapter
 
-This is an adapter for redis to be used with mikro-orm. 
+This is an adapter for redis to be used with mikro-orm.
 
 Install it with its peer dependencies
 
@@ -19,6 +19,8 @@ const orm = await MikroORM.init({
   resultCache: {
     adapter: RedisCacheAdapter,
     options: {
+      // An optional key prefix. By default is `mikro`
+      keyPrefix: 'mikro'
       // Here goes IORedis connection options
       host: '...',
       port: 6379,
@@ -31,8 +33,7 @@ const orm = await MikroORM.init({
 Instead of passing options, you can pass directly an IORedis instance
 
 ```js
-
-import Redis from 'ioredis';
+import Redis from "ioredis";
 
 const myRedisClient = new Redis();
 
@@ -41,8 +42,8 @@ const orm = await MikroORM.init({
   resultCache: {
     adapter: RedisCacheAdapter,
     options: {
-      client: myRedisClient
-    }
-  }
+      client: myRedisClient,
+    },
+  },
 });
 ```
