@@ -1,5 +1,13 @@
 # Mikro ORM - Redis cache adapter - Changelog
 
+## 3.1.0
+
+- Fix interface for mikroORM v5
+
+## 3.0.0
+
+- Support mikroORM v5
+
 ## 2.0.0
 
 - Support for lazy connected redis clients
