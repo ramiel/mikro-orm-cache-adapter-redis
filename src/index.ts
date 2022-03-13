@@ -1,4 +1,3 @@
-import { RedisCacheAdapter } from './RedisCacheAdapter';
+import { RedisCacheAdapter } from "./RedisCacheAdapter";
 
-export * from './RedisCacheAdapter';
-export default RedisCacheAdapter;
+export * from "./RedisCacheAdapter";

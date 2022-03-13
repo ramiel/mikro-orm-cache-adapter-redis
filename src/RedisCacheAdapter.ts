@@ -58,17 +58,22 @@ export class RedisCacheAdapter implements CacheAdapter {
     expiration = this.expiration
   ): Promise<void> {
     const stringData = JSON.stringify(data);
-    const completKey = this._getKey(key);
+    const completeKey = this._getKey(key);
     if (this.debug) {
       console.log(
-        `set "${completKey}": "${stringData}" with expiration ${expiration}`
+        `set "${completeKey}": "${stringData}" with expiration ${expiration}`
       );
     }
     if (expiration) {
-      await this.client.set(completKey, stringData, "PX", expiration);
+      await this.client.set(completeKey, stringData, "PX", expiration);
     } else {
-      await this.client.set(completKey, stringData);
+      await this.client.set(completeKey, stringData);
     }
+  }
+
+  async remove(name: string): Promise<void> {
+    const completeKey = this._getKey(name);
+    await this.client.del(completeKey);
   }
 
   async clear(): Promise<void> {
@@ -108,3 +113,5 @@ export class RedisCacheAdapter implements CacheAdapter {
     this.client.disconnect();
   }
 }
+
+export default RedisCacheAdapter;

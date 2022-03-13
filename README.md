@@ -38,6 +38,7 @@ const orm = await MikroORM.init({
 Instead of passing options, you can pass directly an IORedis instance
 
 ```js
+import { RedisCacheAdapter } from "mikro-orm-cache-adapter-redis";
 import Redis from "ioredis";
 
 const myRedisClient = new Redis();
