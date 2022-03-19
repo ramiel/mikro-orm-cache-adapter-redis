@@ -1,6 +1,6 @@
-import type { CacheAdapter } from '@mikro-orm/core';
-import IORedis from 'ioredis';
-import type { Redis, RedisOptions } from 'ioredis';
+import type { CacheAdapter } from "@mikro-orm/core";
+import IORedis from "ioredis";
+import type { Redis, RedisOptions } from "ioredis";
 
 export interface BaseOptions {
   expiration?: number;
@@ -11,37 +11,37 @@ export interface BaseOptions {
 export interface BuildOptions extends BaseOptions, RedisOptions {}
 export interface ClientOptions extends BaseOptions {
   client: Redis;
-	logger: (...args: any[]) => void
+  logger: (...args: unknown[]) => void;
 }
 
 export type RedisCacheAdapterOptions = BuildOptions | ClientOptions;
 
 export class RedisCacheAdapter implements CacheAdapter {
-	private readonly client: Redis;
-	private readonly debug: boolean;
-	private readonly expiration?: number;
-	private readonly keyPrefix!: string;
-	private readonly logger: (...args: any[]) => void;
+  private readonly client: Redis;
+  private readonly debug: boolean;
+  private readonly expiration?: number;
+  private readonly keyPrefix!: string;
+  private readonly logger: (...args: unknown[]) => void;
 
-	constructor(options: RedisCacheAdapterOptions) {
-		const { debug = false, expiration, keyPrefix } = options;
-		this.logger = (options as ClientOptions).logger ?? console.log;
+  constructor(options: RedisCacheAdapterOptions) {
+    const { debug = false, expiration, keyPrefix } = options;
+    this.logger = (options as ClientOptions).logger ?? console.log;
 
-		this.keyPrefix = keyPrefix || 'mikro';
-		if ((options as ClientOptions).client) {
-			this.client = (options as ClientOptions).client;
-		} else {
-			const { ...redisOpt } = options as BuildOptions;
-			this.client = new IORedis(redisOpt);
-		}
-		this.debug = debug;
-		this.expiration = expiration;
-		if (this.debug) {
-			this.logger(
-				`The Redis client for cache has been created! | Cache expiration: ${this.expiration}ms`,
-			);
-		}
-	}
+    this.keyPrefix = keyPrefix || "mikro";
+    if ((options as ClientOptions).client) {
+      this.client = (options as ClientOptions).client;
+    } else {
+      const { ...redisOpt } = options as BuildOptions;
+      this.client = new IORedis(redisOpt);
+    }
+    this.debug = debug;
+    this.expiration = expiration;
+    if (this.debug) {
+      this.logger(
+        `The Redis client for cache has been created! | Cache expiration: ${this.expiration}ms`
+      );
+    }
+  }
 
   _getKey(name: string) {
     return `${this.keyPrefix}:${name}`;
@@ -69,7 +69,7 @@ export class RedisCacheAdapter implements CacheAdapter {
     const completeKey = this._getKey(key);
     if (this.debug) {
       this.logger(
-				`Set "${completeKey}": "${stringData}" with cache expiration ${expiration}ms`
+        `Set "${completeKey}": "${stringData}" with cache expiration ${expiration}ms`
       );
     }
     if (expiration) {
