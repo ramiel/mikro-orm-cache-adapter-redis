@@ -11,7 +11,7 @@ export interface BuildOptions extends BaseOptions, RedisOptions {}
 export interface ClientOptions extends BaseOptions {
 	client: Redis;
 	keyPrefix?: string;
-	logger?: (...args: any) => void;
+	logger?: (...args: any[]) => void;
 }
 
 export type RedisCacheAdapterOptions = BuildOptions | ClientOptions;
@@ -21,7 +21,7 @@ export class RedisCacheAdapter implements CacheAdapter {
 	private readonly debug: boolean;
 	private readonly expiration?: number;
 	private readonly keyPrefix!: string;
-	private readonly logger: (...args: any) => void;
+	private readonly logger: (...args: any[]) => void;
 
 	constructor(options: RedisCacheAdapterOptions) {
 		const { debug = false, expiration, keyPrefix } = options;
