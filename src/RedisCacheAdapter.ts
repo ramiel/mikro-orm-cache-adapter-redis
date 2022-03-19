@@ -11,6 +11,7 @@ export interface BaseOptions {
 export interface BuildOptions extends BaseOptions, RedisOptions {}
 export interface ClientOptions extends BaseOptions {
   client: Redis;
+  logger: (...args: unknown[]) => void;
 }
 
 export type RedisCacheAdapterOptions = BuildOptions | ClientOptions;
@@ -20,9 +21,12 @@ export class RedisCacheAdapter implements CacheAdapter {
   private readonly debug: boolean;
   private readonly expiration?: number;
   private readonly keyPrefix!: string;
+  private readonly logger: (...args: unknown[]) => void;
 
   constructor(options: RedisCacheAdapterOptions) {
     const { debug = false, expiration, keyPrefix } = options;
+    this.logger = (options as ClientOptions).logger ?? console.log;
+
     this.keyPrefix = keyPrefix || "mikro";
     if ((options as ClientOptions).client) {
       this.client = (options as ClientOptions).client;
@@ -33,7 +37,9 @@ export class RedisCacheAdapter implements CacheAdapter {
     this.debug = debug;
     this.expiration = expiration;
     if (this.debug) {
-      console.log(`redis client created!`, this.expiration);
+      this.logger(
+        `The Redis client for cache has been created! | Cache expiration: ${this.expiration}ms`
+      );
     }
   }
 
@@ -46,7 +52,7 @@ export class RedisCacheAdapter implements CacheAdapter {
     const completKey = this._getKey(key);
     const data = await this.client.get(completKey);
     if (this.debug) {
-      console.log(`get "${completKey}": "${data}"`);
+      this.logger(`Get "${completKey}": "${data}"`);
     }
     if (!data) return undefined;
     return JSON.parse(data);
@@ -62,8 +68,8 @@ export class RedisCacheAdapter implements CacheAdapter {
     const stringData = JSON.stringify(data);
     const completeKey = this._getKey(key);
     if (this.debug) {
-      console.log(
-        `set "${completeKey}": "${stringData}" with expiration ${expiration}`
+      this.logger(
+        `Set "${completeKey}": "${stringData}" with cache expiration ${expiration}ms`
       );
     }
     if (expiration) {
@@ -80,7 +86,7 @@ export class RedisCacheAdapter implements CacheAdapter {
 
   async clear(): Promise<void> {
     if (this.debug) {
-      console.log("clearing cache...");
+      this.logger("Clearing cache...");
     }
     return new Promise((resolve, reject) => {
       const stream = this.client.scanStream({
@@ -98,12 +104,12 @@ export class RedisCacheAdapter implements CacheAdapter {
         pipeline.exec((err) => {
           if (err) {
             if (this.debug) {
-              console.log("Error clearing cache");
+              this.logger("Error clearing cache");
             }
             return reject(err);
           }
           if (this.debug) {
-            console.log("cleared cache");
+            this.logger("Cleared cache");
           }
           resolve();
         });
