@@ -38,8 +38,7 @@ export class RedisCacheAdapter implements CacheAdapter {
 		this.expiration = expiration;
 		if (this.debug) {
 			this.logger(
-				`The Redis client for cache has been created!`,
-				this.expiration
+				`The Redis client for cache has been created! | Cache expiration: ${this.expiration}ms`,
 			);
 		}
 	}
@@ -68,7 +67,7 @@ export class RedisCacheAdapter implements CacheAdapter {
 		const completeKey = this._getKey(key);
 		if (this.debug) {
 			this.logger(
-				`Set "${completeKey}": "${stringData}" with expiration ${expiration}`
+				`Set "${completeKey}": "${stringData}" with cache expiration ${expiration}ms`
 			);
 		}
 		if (expiration) {
