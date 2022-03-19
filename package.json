@@ -11,7 +11,8 @@
   "scripts": {
     "prepare": "npm run build",
     "build": "rollup -c --environment NODE_ENV:production",
-    "build-watch": "rollup -c --environment NODE_ENV:production -w --no-watch.clearScreen"
+    "build-watch": "rollup -c --environment NODE_ENV:production -w --no-watch.clearScreen",
+    "test": "eslint ."
   },
   "dependencies": {
     "@types/ioredis": "^4.19.1"
