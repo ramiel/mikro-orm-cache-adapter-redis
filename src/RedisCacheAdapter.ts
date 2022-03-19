@@ -4,13 +4,13 @@ import type { Redis, RedisOptions } from "ioredis";
 
 export interface BaseOptions {
   expiration?: number;
+  keyPrefix?: string;
   debug?: boolean;
 }
 
 export interface BuildOptions extends BaseOptions, RedisOptions {}
 export interface ClientOptions extends BaseOptions {
   client: Redis;
-  keyPrefix?: string;
 }
 
 export type RedisCacheAdapterOptions = BuildOptions | ClientOptions;
@@ -41,6 +41,7 @@ export class RedisCacheAdapter implements CacheAdapter {
     return `${this.keyPrefix}:${name}`;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async get<T = any>(key: string): Promise<T | undefined> {
     const completKey = this._getKey(key);
     const data = await this.client.get(completKey);
@@ -53,8 +54,9 @@ export class RedisCacheAdapter implements CacheAdapter {
 
   async set(
     key: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any,
-    origin: string,
+    _origin: string,
     expiration = this.expiration
   ): Promise<void> {
     const stringData = JSON.stringify(data);
