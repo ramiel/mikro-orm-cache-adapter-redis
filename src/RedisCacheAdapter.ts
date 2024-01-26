@@ -24,22 +24,42 @@ export class RedisCacheAdapter implements CacheAdapter {
   private readonly logger: (...args: unknown[]) => void;
 
   constructor(options: RedisCacheAdapterOptions) {
-    const { debug = false, expiration, keyPrefix } = options;
+    const { debug = false, expiration, keyPrefix = "" } = options;
     this.logger = (options as ClientOptions).logger ?? console.log;
 
-    this.keyPrefix = keyPrefix || "mikro";
-    if ((options as ClientOptions).client) {
-      this.client = (options as ClientOptions).client;
-    } else {
-      const { ...redisOpt } = options as BuildOptions;
-      this.client = new IORedis(redisOpt);
-    }
+    this.keyPrefix = this.computeKeyPrefix(options, keyPrefix);
+    this.client = this.createRedisClient(options);
     this.debug = debug;
     this.expiration = expiration;
+    this.logDebugMessage(
+      `The Redis client for cache has been created! | Cache expiration: ${this.expiration}ms`
+    );
+  }
+
+  private computeKeyPrefix(
+    options: RedisCacheAdapterOptions,
+    localKeyPrefix: string
+  ): string {
+    if ((options as ClientOptions).client?.options.keyPrefix) {
+      return localKeyPrefix ? `:${localKeyPrefix}` : "";
+    }
+
+    // Default to 'mikro' if keyPrefix is not provided and there's no client options key prefix
+    return localKeyPrefix || "mikro";
+  }
+
+  private createRedisClient(options: RedisCacheAdapterOptions): Redis {
+    if ((options as ClientOptions).client) {
+      return (options as ClientOptions).client;
+    } else {
+      const redisOpt = options as BuildOptions;
+      return new IORedis(redisOpt);
+    }
+  }
+
+  private logDebugMessage(message: string) {
     if (this.debug) {
-      this.logger(
-        `The Redis client for cache has been created! | Cache expiration: ${this.expiration}ms`
-      );
+      this.logger(message);
     }
   }
 
@@ -49,11 +69,9 @@ export class RedisCacheAdapter implements CacheAdapter {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   async get<T = any>(key: string): Promise<T | undefined> {
-    const completKey = this._getKey(key);
-    const data = await this.client.get(completKey);
-    if (this.debug) {
-      this.logger(`Get "${completKey}": "${data}"`);
-    }
+    const completeKey = this._getKey(key);
+    const data = await this.client.get(completeKey);
+    this.logDebugMessage(`Get "${completeKey}": "${data}"`);
     if (!data) return undefined;
     return JSON.parse(data);
   }
@@ -67,11 +85,9 @@ export class RedisCacheAdapter implements CacheAdapter {
   ): Promise<void> {
     const stringData = JSON.stringify(data);
     const completeKey = this._getKey(key);
-    if (this.debug) {
-      this.logger(
-        `Set "${completeKey}": "${stringData}" with cache expiration ${expiration}ms`
-      );
-    }
+    this.logDebugMessage(
+      `Set "${completeKey}": "${stringData}" with cache expiration ${expiration}ms`
+    );
     if (expiration) {
       await this.client.set(completeKey, stringData, "PX", expiration);
     } else {
@@ -81,13 +97,12 @@ export class RedisCacheAdapter implements CacheAdapter {
 
   async remove(name: string): Promise<void> {
     const completeKey = this._getKey(name);
+    this.logDebugMessage(`Remove specific key cache =>> ${completeKey}`);
     await this.client.del(completeKey);
   }
 
   async clear(): Promise<void> {
-    if (this.debug) {
-      this.logger("Clearing cache...");
-    }
+    this.logDebugMessage("Clearing cache...");
     return new Promise((resolve, reject) => {
       const stream = this.client.scanStream({
         match: `${this.keyPrefix}:*`,
@@ -103,14 +118,10 @@ export class RedisCacheAdapter implements CacheAdapter {
       stream.on("end", () => {
         pipeline.exec((err) => {
           if (err) {
-            if (this.debug) {
-              this.logger("Error clearing cache");
-            }
+            this.logDebugMessage("Error clearing cache");
             return reject(err);
           }
-          if (this.debug) {
-            this.logger("Cleared cache");
-          }
+          this.logDebugMessage("Cleared cache");
           resolve();
         });
       });
