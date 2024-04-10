@@ -1,5 +1,7 @@
-import type { CacheAdapter } from "@mikro-orm/core";
+import { serialize, deserialize } from "node:v8";
 import IORedis from "ioredis";
+
+import type { CacheAdapter } from "@mikro-orm/core";
 import type { Redis, RedisOptions } from "ioredis";
 
 export interface BaseOptions {
@@ -67,32 +69,57 @@ export class RedisCacheAdapter implements CacheAdapter {
     return `${this.keyPrefix}:${name}`;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  async get<T = any>(key: string): Promise<T | undefined> {
+  async get<T = unknown>(key: string): Promise<T | undefined> {
     const completeKey = this._getKey(key);
-    const data = await this.client.get(completeKey);
-    this.logDebugMessage(`Get "${completeKey}": "${data}"`);
-    if (!data) return undefined;
-    return JSON.parse(data);
+    const data = await this.client.getBuffer(completeKey);
+
+    if (!data) {
+      this.logDebugMessage(`Get "${completeKey}": "null"`);
+      return undefined;
+    }
+
+    let deserialized: T;
+    try {
+      deserialized = deserialize(data) as T;
+    } catch (error) {
+      this.logDebugMessage(`Failed to deserialize data: ${data}`);
+      return undefined;
+    }
+
+    this.logDebugMessage(
+      `Get "${completeKey}": "${JSON.stringify(deserialized)}"`
+    );
+
+    return deserialized;
   }
 
   async set(
     key: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    data: any,
+    data: unknown,
     _origin: string,
     expiration = this.expiration
   ): Promise<void> {
-    const stringData = JSON.stringify(data);
-    const completeKey = this._getKey(key);
-    this.logDebugMessage(
-      `Set "${completeKey}": "${stringData}" with cache expiration ${expiration}ms`
-    );
-    if (expiration) {
-      await this.client.set(completeKey, stringData, "PX", expiration);
-    } else {
-      await this.client.set(completeKey, stringData);
+    let serialized: Buffer;
+    try {
+      serialized = serialize(data);
+    } catch (error) {
+      this.logDebugMessage(`Failed to serialize data: ${data}`);
+      return;
     }
+
+    const completeKey = this._getKey(key);
+
+    if (expiration) {
+      await this.client.set(completeKey, serialized, "PX", expiration);
+    } else {
+      await this.client.set(completeKey, serialized);
+    }
+
+    this.logDebugMessage(
+      `Set "${completeKey}": "${JSON.stringify(
+        data
+      )}" with cache expiration ${expiration}ms`
+    );
   }
 
   async remove(name: string): Promise<void> {

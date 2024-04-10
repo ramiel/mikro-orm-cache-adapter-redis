@@ -53,3 +53,20 @@ const orm = await MikroORM.init({
   },
 });
 ```
+
+## Serializing
+
+This package uses [`serialize`](https://nodejs.org/api/v8.html#v8serializevalue) and [`deserialize`](https://nodejs.org/api/v8.html#v8deserializebuffer) functions from the Node.js v8 API instead of `JSON.stringify` and `JSON.parse`.
+
+They are inadequate for certain primitive data types like Buffer and Typed Array, as they cannot accurately reproduce same data after serialization.
+You can checkout its limitation [here](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify#description).
+
+But, there're still some primitives that `serialize` cannot handle.
+
+- function
+- symbol
+- any uncopyable data
+
+If you need to serialize these types of data, you should using a custom [serializer](https://mikro-orm.io/docs/serializing#property-serializers) or [custom type](https://mikro-orm.io/docs/custom-types)
+
+If you're in debug mode, you will see JSON stringified data at your console. This is solely for debugging purposes. `serialize` is used for actual cache.
