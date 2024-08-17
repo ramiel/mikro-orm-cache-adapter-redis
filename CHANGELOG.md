@@ -1,5 +1,9 @@
 # Mikro ORM - Redis cache adapter - Changelog
 
+## 3.2.0
+
+- Logger function is now customizable (by @kaname-png)
+
 ## 3.1.0
 
 - Fix interface for mikroORM v5
