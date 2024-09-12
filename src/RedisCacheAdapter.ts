@@ -184,6 +184,7 @@ export class RedisCacheAdapter implements CacheAdapter {
             return reject(err);
           }
           this.logDebugMessage("Cleared cache");
+          this.deletedKeys.clear();
           resolve();
         });
       });
