@@ -47,7 +47,7 @@ export class RedisCacheAdapter implements CacheAdapter {
     }
 
     // Default to 'mikro' if keyPrefix is not provided and there's no client options key prefix
-    return localKeyPrefix || "mikro";
+    return localKeyPrefix ?? "mikro";
   }
 
   private createRedisClient(options: RedisCacheAdapterOptions): Redis {
