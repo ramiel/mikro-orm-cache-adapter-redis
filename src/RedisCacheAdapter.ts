@@ -22,8 +22,13 @@ export class RedisCacheAdapter implements CacheAdapter {
   private readonly client: Redis;
   private readonly debug: boolean;
   private readonly expiration?: number;
-  private readonly keyPrefix!: string;
+  private readonly keyPrefix: string;
   private readonly logger: (...args: unknown[]) => void;
+
+  /**
+   * When a cache is failed to be deleted, we should prevent it from loading until it's stored again
+   */
+  private readonly deletedKeys = new Set<string>();
 
   constructor(options: RedisCacheAdapterOptions) {
     const { debug = false, expiration, keyPrefix = "" } = options;
@@ -71,10 +76,22 @@ export class RedisCacheAdapter implements CacheAdapter {
 
   async get<T = unknown>(key: string): Promise<T | undefined> {
     const completeKey = this._getKey(key);
-    const data = await this.client.getBuffer(completeKey);
+
+    if (this.deletedKeys.has(completeKey)) {
+      this.logDebugMessage(`Get "${completeKey}": "undefined"`);
+      return undefined;
+    }
+
+    let data: Buffer | null;
+    try {
+      data = await this.client.getBuffer(completeKey);
+    } catch (e) {
+      this.logDebugMessage(`Failed to get the data: ${completeKey}`);
+      return undefined;
+    }
 
     if (!data) {
-      this.logDebugMessage(`Get "${completeKey}": "null"`);
+      this.logDebugMessage(`Get "${completeKey}": "undefined"`);
       return undefined;
     }
 
@@ -82,7 +99,7 @@ export class RedisCacheAdapter implements CacheAdapter {
     try {
       deserialized = deserialize(data) as T;
     } catch (error) {
-      this.logDebugMessage(`Failed to deserialize data: ${data}`);
+      this.logDebugMessage(`Failed to deserialize the data of ${key}`);
       return undefined;
     }
 
@@ -109,11 +126,20 @@ export class RedisCacheAdapter implements CacheAdapter {
 
     const completeKey = this._getKey(key);
 
-    if (expiration) {
-      await this.client.set(completeKey, serialized, "PX", expiration);
-    } else {
-      await this.client.set(completeKey, serialized);
+    try {
+      if (expiration) {
+        await this.client.set(completeKey, serialized, "PX", expiration);
+      } else {
+        await this.client.set(completeKey, serialized);
+      }
+    } catch (e) {
+      this.logDebugMessage(
+        `Error while setting key cache =>> ${(e as Error).message}`
+      );
+      return;
     }
+
+    this.deletedKeys.delete(completeKey);
 
     this.logDebugMessage(
       `Set "${completeKey}": "${JSON.stringify(
@@ -125,7 +151,16 @@ export class RedisCacheAdapter implements CacheAdapter {
   async remove(name: string): Promise<void> {
     const completeKey = this._getKey(name);
     this.logDebugMessage(`Remove specific key cache =>> ${completeKey}`);
-    await this.client.del(completeKey);
+
+    try {
+      await this.client.del(completeKey);
+      this.deletedKeys.delete(completeKey);
+    } catch (e) {
+      this.deletedKeys.add(completeKey);
+      this.logDebugMessage(
+        `Error while removing key cache =>> ${(e as Error).message}`
+      );
+    }
   }
 
   async clear(): Promise<void> {
