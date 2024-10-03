@@ -54,6 +54,64 @@ const orm = await MikroORM.init({
 });
 ```
 
+## Using Serializable
+
+`Serializable` is a type that helps you to define your entity as serializable.
+
+Allowed types are:
+ - Primitives except symbol
+ - ReadableStream
+ - WritableStream
+ - Array
+ - ArrayBuffer
+ - Buffer
+ - Type (mikro orm type)
+ - Serializable
+
+```ts
+@Entity()
+class Book implements Serializable<Book> {
+  @Property()
+  title!: string;
+
+  @Property()
+  symbol!: symbol; // ❌ Type Error! symbol is not serializable
+}
+```
+
+> [!NOTE]
+> If serializing fails, the data will be loaded from the database.
+
+### Use Custom Types to allow any type you want
+
+If you want to use a type that is not serializable, you can use it with a custom type.
+
+```ts
+class FunctionType extends Type<Func, string> {  
+  convertToDatabaseValue(value: Func): string {
+    return value.toString();
+  }
+
+  convertToJSValue(value: string): Func {
+    return new Function(value).toString() as Func;
+  }
+
+  getColumnType(): string {
+    return "text";
+  }
+}
+
+// Use AnyType instead of any
+@Entity()
+class Book implements Serializable<Book, Func> { // Add your custom type
+  @Property({ type: AnyType })
+  title!: string;
+
+  @Property({ type: FunctionType })
+  fn!: Func
+}
+```
+
 ## Serializing
 
 This package uses [`serialize`](https://nodejs.org/api/v8.html#v8serializevalue) and [`deserialize`](https://nodejs.org/api/v8.html#v8deserializebuffer) functions from the Node.js v8 API instead of `JSON.stringify` and `JSON.parse`.
