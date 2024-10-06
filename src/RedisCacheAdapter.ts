@@ -10,7 +10,7 @@ export interface BaseOptions {
   debug?: boolean;
 }
 
-export interface BuildOptions extends BaseOptions, RedisOptions {}
+export interface BuildOptions extends BaseOptions, RedisOptions { }
 export interface ClientOptions extends BaseOptions {
   client: Redis;
   logger: (...args: unknown[]) => void;
@@ -146,7 +146,7 @@ export class RedisCacheAdapter implements CacheAdapter {
       this.logDebugMessage(
         `Error while removing key cache =>> ${(e as Error).message}`
       );
-      throw new CacheRemoveError(e);
+      throw new CacheRemoveError(e as Error);
     }
   }
 
@@ -183,7 +183,7 @@ export class RedisCacheAdapter implements CacheAdapter {
 }
 
 export class CacheRemoveError extends Error {
-  constructor(cause: unknown) {
+  constructor(cause: Error) {
     super("Cache remove failed", { cause });
   }
 }
