@@ -10,7 +10,7 @@ export interface BaseOptions {
   debug?: boolean;
 }
 
-export interface BuildOptions extends BaseOptions, RedisOptions { }
+export interface BuildOptions extends BaseOptions, RedisOptions {}
 export interface ClientOptions extends BaseOptions {
   client: Redis;
   logger: (...args: unknown[]) => void;
