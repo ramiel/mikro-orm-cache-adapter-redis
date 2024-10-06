@@ -5,7 +5,7 @@ import IORedis from "ioredis";
 const client = new IORedis("redis://localhost:6379");
 const adapter = new RedisCacheAdapter({
   client,
-  logger: vi.fn()
+  logger: vi.fn(),
 });
 
 beforeEach(async () => {
@@ -82,10 +82,10 @@ it("Failed to deserialize the data, return undefined", async () => {
   expect(result).toBe(undefined);
 });
 
-it('Failed to remove the cache, throw CacheRemoveError', async () => {
+it("Failed to remove the cache, throw CacheRemoveError", async () => {
   vi.spyOn(client, "del").mockRejectedValueOnce(new Error());
 
-  expect(adapter.remove("key")).rejects.toThrowError(CacheRemoveError)
+  expect(adapter.remove("key")).rejects.toThrowError(CacheRemoveError);
 });
 
 it("Clear all cache", async () => {
