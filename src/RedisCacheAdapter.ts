@@ -146,6 +146,7 @@ export class RedisCacheAdapter implements CacheAdapter {
       this.logDebugMessage(
         `Error while removing key cache =>> ${(e as Error).message}`
       );
+      throw new CacheRemoveError(e);
     }
   }
 
@@ -178,6 +179,12 @@ export class RedisCacheAdapter implements CacheAdapter {
 
   async close() {
     this.client.disconnect();
+  }
+}
+
+export class CacheRemoveError extends Error {
+  constructor(cause: unknown) {
+    super("Cache remove failed", { cause })
   }
 }
 
