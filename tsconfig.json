@@ -7,7 +7,7 @@
 
     /* modules */
     "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "Node",
 
     /* Language and Environment */
     "lib": ["ESNext"],
