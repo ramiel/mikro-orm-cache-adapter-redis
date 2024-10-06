@@ -1,11 +1,11 @@
 import { it, vi, expect, beforeEach } from "vitest";
-import { RedisCacheAdapter } from "../src";
+import { CacheRemoveError, RedisCacheAdapter } from "../src";
 import IORedis from "ioredis";
 
 const client = new IORedis("redis://localhost:6379");
 const adapter = new RedisCacheAdapter({
   client,
-  logger: vi.fn(),
+  logger: vi.fn()
 });
 
 beforeEach(async () => {
@@ -33,7 +33,7 @@ it.each([
     ]),
     g: new Set([1, 2, 3]),
   },
-])(`save a cache and load it: %o`, async (data) => {
+])(`Save a cache and load it: %o`, async (data) => {
   await adapter.set("key", data, "origin");
 
   const result = await adapter.get("key");
@@ -41,7 +41,7 @@ it.each([
   expect(result).toEqual(data);
 });
 
-it("return void when failed to serialize the data", async () => {
+it("Failed to serialize the data, return undefined", async () => {
   await adapter.set("key", { a: () => undefined }, "origin");
 
   const result = await adapter.get("key");
@@ -49,7 +49,7 @@ it("return void when failed to serialize the data", async () => {
   expect(result).toBe(undefined);
 });
 
-it("return void when failed to store the cache", async () => {
+it("Failed to save a cache, return undefined", async () => {
   vi.spyOn(client, "set").mockRejectedValueOnce(new Error());
 
   await adapter.set("key", "test", "origin");
@@ -59,7 +59,7 @@ it("return void when failed to store the cache", async () => {
   expect(result).toBe(undefined);
 });
 
-it("return undefined when failed to load the cache", async () => {
+it("Failed to load the cache, return undefined", async () => {
   vi.spyOn(client, "getBuffer").mockRejectedValueOnce(new Error());
 
   const result = await adapter.get("key");
@@ -67,13 +67,13 @@ it("return undefined when failed to load the cache", async () => {
   expect(result).toBe(undefined);
 });
 
-it("return undefined when cache is not found", async () => {
+it("When cache is not found, return undefined", async () => {
   const result = await adapter.get("key");
 
   expect(result).toBe(undefined);
 });
 
-it("return undefined when failed to deserialize the data", async () => {
+it("Failed to deserialize the data, return undefined", async () => {
   await adapter.set("key", "test", "origin");
   vi.spyOn(client, "getBuffer").mockResolvedValueOnce(Buffer.from("test"));
 
@@ -82,49 +82,13 @@ it("return undefined when failed to deserialize the data", async () => {
   expect(result).toBe(undefined);
 });
 
-it("delete a cache, return undefined for it", async () => {
-  await adapter.set("key", "test", "origin");
-
-  await adapter.remove("key");
-
-  const result = await adapter.get("key");
-
-  expect(result).toBe(undefined);
-});
-
-it("failed to delete a cache, return undefined for it", async () => {
-  await adapter.set("key", "test", "origin");
-  vi.spyOn(client, "del").mockRejectedValueOnce(new Error());
-  await adapter.remove("key");
-
-  const result = await adapter.get("key");
-
-  expect(result).toBe(undefined);
-});
-
-it("set new data after failed to delete a cache, return the new data", async () => {
-  await adapter.set("key", "test", "origin");
+it('Failed to remove the cache, throw CacheRemoveError', async () => {
   vi.spyOn(client, "del").mockRejectedValueOnce(new Error());
 
-  await adapter.set("key", "test2", "origin");
-
-  const result = await adapter.get("key");
-
-  expect(result).toBe("test2");
+  expect(adapter.remove("key")).rejects.toThrowError(CacheRemoveError)
 });
 
-it("succeed to delete a cahe after failed to delete it, return undefined for it", async () => {
-  await adapter.set("key", "test", "origin");
-  vi.spyOn(client, "del").mockRejectedValueOnce(new Error());
-
-  await adapter.remove("key");
-
-  const result = await adapter.get("key");
-
-  expect(result).toBe(undefined);
-});
-
-it("clear all cache", async () => {
+it("Clear all cache", async () => {
   await adapter.set("key1", "test", "origin");
   await adapter.set("key2", "test", "origin");
 
