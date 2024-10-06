@@ -10,7 +10,7 @@ export interface BaseOptions {
   debug?: boolean;
 }
 
-export interface BuildOptions extends BaseOptions, RedisOptions {}
+export interface BuildOptions extends BaseOptions, RedisOptions { }
 export interface ClientOptions extends BaseOptions {
   client: Redis;
   logger: (...args: unknown[]) => void;
@@ -24,11 +24,6 @@ export class RedisCacheAdapter implements CacheAdapter {
   private readonly expiration?: number;
   private readonly keyPrefix: string;
   private readonly logger: (...args: unknown[]) => void;
-
-  /**
-   * When a cache is failed to be deleted, we should prevent it from loading until it's stored again
-   */
-  private readonly deletedKeys = new Set<string>();
 
   constructor(options: RedisCacheAdapterOptions) {
     const { debug = false, expiration, keyPrefix = "" } = options;
@@ -76,11 +71,6 @@ export class RedisCacheAdapter implements CacheAdapter {
 
   async get<T = unknown>(key: string): Promise<T | undefined> {
     const completeKey = this._getKey(key);
-
-    if (this.deletedKeys.has(completeKey)) {
-      this.logDebugMessage(`Get "${completeKey}": "undefined"`);
-      return undefined;
-    }
 
     let data: Buffer | null;
     try {
@@ -139,8 +129,6 @@ export class RedisCacheAdapter implements CacheAdapter {
       return;
     }
 
-    this.deletedKeys.delete(completeKey);
-
     this.logDebugMessage(
       `Set "${completeKey}": "${JSON.stringify(
         data
@@ -154,9 +142,7 @@ export class RedisCacheAdapter implements CacheAdapter {
 
     try {
       await this.client.del(completeKey);
-      this.deletedKeys.delete(completeKey);
     } catch (e) {
-      this.deletedKeys.add(completeKey);
       this.logDebugMessage(
         `Error while removing key cache =>> ${(e as Error).message}`
       );
