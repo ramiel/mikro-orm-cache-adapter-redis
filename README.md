@@ -70,3 +70,15 @@ But, there're still some primitives that `serialize` cannot handle.
 If you need to serialize these types of data, you should using a custom [serializer](https://mikro-orm.io/docs/serializing#property-serializers) or [custom type](https://mikro-orm.io/docs/custom-types)
 
 If you're in debug mode, you will see JSON stringified data at your console. This is solely for debugging purposes. `serialize` is used for actual cache.
+
+## Testing
+
+You need docker compose to run the tests.
+
+```bash
+# Start test services
+npm run test:services:start
+
+# Run tests
+npm test
+```
