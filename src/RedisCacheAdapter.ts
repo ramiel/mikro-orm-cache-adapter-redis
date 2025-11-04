@@ -152,29 +152,22 @@ export class RedisCacheAdapter implements CacheAdapter {
 
   async clear(): Promise<void> {
     this.logDebugMessage("Clearing cache...");
-    return new Promise((resolve, reject) => {
-      const stream = this.client.scanStream({
-        match: `${this.keyPrefix}:*`,
-      });
-      const pipeline = this.client.pipeline();
-      stream.on("data", (keys: string[]) => {
-        if (keys.length) {
-          keys.forEach(function (key) {
-            pipeline.del(key);
-          });
-        }
-      });
-      stream.on("end", () => {
-        pipeline.exec((err) => {
-          if (err) {
-            this.logDebugMessage("Error clearing cache");
-            return reject(err);
-          }
-          this.logDebugMessage("Cleared cache");
-          resolve();
-        });
-      });
+
+    const stream = this.client.scanStream({
+      match: `${this.keyPrefix}:*`,
+      count: 100,
     });
+
+    for await (const keys of stream as AsyncIterable<string[]>) {
+      if (!keys?.length) continue;
+
+      const pipeline = this.client.pipeline();
+      for (const key of keys) {
+        pipeline.del(key);
+      }
+
+      await pipeline.exec();
+    }
   }
 
   async close() {
